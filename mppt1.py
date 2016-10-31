@@ -36,7 +36,7 @@ def findr(P,W):
 	d = b*b-4*a*c
 	
 	if d < 0:
-		return 0
+		return math.sqrt(-1*d)
 	elif d == 0:
 		x = (-b+math.sqrt(b*b-4*a*c))/2*a
 		return np.float(x)
@@ -51,7 +51,7 @@ def findV(w,r):
 	return V
 
 def findVP(P,r):
-	m = P * (Ra + r)* ( Ra + r) * 1 / r 
+	m = P * (Ra + r)* ( Ra + r) * 1 /(r)
 	return float(np.sqrt(m))
 
 def findI(w,r):
@@ -150,7 +150,9 @@ timelapse = time.time() - jtag
 predict= []
 freeinput = []
 simulate = []
+
 #plotting real time with 4 different wind sets 
+
 import random
 for i in range (1, 100):
 	freeinput.append(i)
@@ -158,17 +160,30 @@ for i in range (1, 100):
 	predict.append(np.float(regr_1.predict([temp])))
 	simulate.append(pando(0,temp))
 
-
+'''
+#for calculation of current vs time 
+import random
+for i in range (1,20):
+	freeinput.append(i)
+	temp = random.randint(400,410)
+	p = np.float(regr_1.predict([temp]))
+	load = findr(p,temp)
+	predict.append(np.float(findIP(p,load)))
+	simulate.append(np.float(findVP(p,load)))
+'''
 
 
 #plotting Power vs Load 
+
 '''
 for i in range(1,270000,1):
 	freeinput.append(i/100)
 	p= regr_1.predict([i/100])
 	predict.append(p)
 '''
+
 #error calculation code
+
 '''
 for i in range(2,2000,1):
 	freeinput.append(i)
@@ -178,10 +193,10 @@ for i in range(2,2000,1):
 	var2 = pando(var,i)
 	error = var2 - np.float(p)
 	predict.append(error/var2)
-
 '''
 
 # calculation of time for P&O and ML P&O for same data 
+
 '''
 ktag = time.time() 
 for i in range(0,100):	
@@ -192,7 +207,6 @@ for i in range(0,100):
 	pando(0,400)
 ktag = time.time() - ktag 
 print "Time for normal P&O " + str(ktag) 
-
 jtag =  time.time()
 for i in range(0,100):
 	pando(float(findr(float(regr_1.predict([600])),600)),600)
@@ -200,9 +214,7 @@ for i in range(0,100):
 	pando(float(findr(float(regr_1.predict([800])),800)),800)
 	pando(float(findr(float(regr_1.predict([500])),500)),500)
 	pando(float(findr(float(regr_1.predict([400])),400)),400)
-
 jtag = time.time() - jtag 
-
 print "Time Using Modified P&O " + str(jtag + timelapse)
 '''
 
@@ -212,6 +224,4 @@ plt.ylabel("Power ( Watts ) ")
 plt.xlabel("Time in ( seconds )")
 plt.plot(freeinput,predict,"r")
 plt.plot(freeinput,simulate,"b")
-
-
 plt.show()

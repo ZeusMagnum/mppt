@@ -152,14 +152,14 @@ freeinput = []
 simulate = []
 
 #plotting real time with 4 different wind sets 
-"""
+
 import random
 for i in range (1, 100):
 	freeinput.append(i)
 	temp = random.randint(400,440)
 	predict.append(np.float(regr_1.predict([temp])))
 	simulate.append(pando(0,temp))
-"""
+
 '''
 #for calculation of current vs time 
 import random
@@ -183,7 +183,7 @@ for i in range(1,270000,1):
 '''
 
 #error calculation code
-
+"""
 
 for i in range(2,2000,1):
 	freeinput.append(i)
@@ -193,7 +193,7 @@ for i in range(2,2000,1):
 	var2 = pando(var,i)
 	error = var2 - np.float(p)
 	predict.append(error/var2)
-
+"""
 
 # calculation of time for P&O and ML P&O for same data 
 
@@ -223,5 +223,5 @@ plt.title(" Power Vs. time (s)")
 plt.ylabel("Power ( Watts ) ")
 plt.xlabel("Time in ( seconds )")
 plt.plot(freeinput,predict,"r")
-#plt.plot(freeinput,simulate,"b")
+plt.plot(freeinput,simulate,"b")
 plt.show()

@@ -136,6 +136,7 @@ plt.show()
 #machine learning part 
 #DATA WILL BE TRAINED CONTINUOUSLY TAKING THE DATA SET OF EVERY 2 HOUR DATA
 #data containing the present trainset from 1st 125 minutes = 2 hour dataset
+
 traindata = convert(ws)
 loaddata =convert(ld)
 

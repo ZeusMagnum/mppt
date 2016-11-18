@@ -1,23 +1,66 @@
 import numpy as np
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt 
-from sklearn import tree
 from sklearn.tree import DecisionTreeRegressor
+from sklearn import tree
 import collections
 from scipy.signal import argrelextrema
+import math 
 from matplotlib.figure import Figure
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import sys
+import subprocess
+import datetime
+#constants 
 Ka = 50
 Kf = 0.01
 If = 2
 Rf = 1
 Ra = 3
+#Functions for power calculations etc.
+def convert(wss):
+	x = []
+	for y in wss:
+		z = []
+		z.append(y)
+		x.append(z)
+	return x
 
 def findr(P,W):
-	Ea=Kf*Ka*If*W
-	return (Ea*Ea - 2*P*Ra)/2*P
+	Ea = Ka*Kf*If*W
+	a = 1
+	b = (2*Ra - (Ea*Ea /P))
+	c = Ra*Ra
 	
+	d = b*b-4*a*c
+	
+	if d < 0:
+		return math.sqrt(-1*d)
+	elif d == 0:
+		x = (-b+math.sqrt(b*b-4*a*c))/2*a
+		return np.float(x)
+	else:
+		x1 = (-b+math.sqrt(b*b-4*a*c))/2*a
+		return np.float(x1)
+	
+
+def findV(w,r):
+	Ea=Kf*Ka*If*w
+	V=Ea*r/(Ra+r)
+	return V
+
+def findVP(P,r):
+	m = P * (Ra + r)* ( Ra + r) * 1 /(r)
+	return float(np.sqrt(m))
+
+def findI(w,r):
+	Ea=Kf*Ka*If*w
+	return float(Ea/(Ra + r))
+
+def findIP(P,r):
+	e = findVP(P,r)
+	return float(e/(Ra + r))
 	
 def Pow(r,w):
 	Ea=Kf*Ka*If*w
@@ -31,123 +74,63 @@ def pando(r,w):
 	P1 = Pow(r,w)
 	
 	while(1):
-		if(Pow(r+0.001,w)>P1):
-			r=r+0.001
+		if(Pow(r+0.0001,w)>P1): 
+			r=r+0.0001
 			P1=Pow(r,w)
-		elif(Pow(r-0.001,w)>P1):
-			r=r-0.001
+		elif(Pow(r-0.0001,w)>P1):
+			r=r-0.0001
 			P1=Pow(r,w)
 		else:	
 			break
 	return np.float(P1)			
 	
 
+#Variables 
 P =list() #power
 L =list() #Load
 V =list() #Voltage
 I =list() #Current 
 
-with open('windspeed_20.txt') as w:
-	k = np.asarray(w.readlines(),np.float)
+#Train datas 
 
-with open('pressure.txt') as p:
-	pr = np.asarray(p.readlines(),np.float)
-
-with open('temp.txt') as t:
-	te = np.asarray(t.readlines(),np.float)
-
-with open('loaddata.txt') as load:
-	ld = np.asarray(load.readlines(),np.float)
-
-#FOR PLOTTING THE GRAPH AT W RPM
-'''
-for rl in range (0,5000):
-	p = np.power((Ka*Kf*If*w[i]/(Ra+(rl/100))),2) * (rl/100)
-	k.append(p)
-	l.append(rl/100)
+predict = [0]
+freeinput = [0]
+for count in range (1,3000):
 	
-for rl in range (0,5000):
-	v = Ka*Kf*If*w[i]/(Ra+(rl/100)) * (rl/100)
-	i = Ka*Kf*If*w[i]/(Ra+(rl/100))
-	V.append(v)
-	I.append(i)
+	with open('windspeed_20.txt') as w:
+		k = np.asarray(w.readlines()[:count],np.float)
 	
-plt.figure(1)
-plt.subplot(311)
-plt.title("MPPT at Windspeed "+ str(w))
-plt.ylabel("Power")
-plt.xlabel("Load")
-plt.plot(l,k)
-plt.subplot(313)
-plt.title("Voltage VS Current at "+ str(w))
-plt.ylabel("Voltage")
-plt.xlabel("Load")
-plt.plot(I,V)
+			
+	ws = [x * 360 for x in k]
+	
+	with open('loaddata.txt') as load:
+		ld = np.asarray(load.readlines()[:count],np.float)
+		
+	traindata = convert(ws)
+	loaddata =convert(ld)
+	regr_1 = DecisionTreeRegressor(max_depth=1000)
+	regr_1.fit(traindata, loaddata)	
+	lua = 300
+	p= regr_1.predict([lua])
+	var = findr(np.float(p),lua)
+	var2 = np.float(pando(var,lua))
+	error = var2 - np.float(p)
+	if error < 0:
+		error = -error
+	
+	predict.append(error/var2)
+	freeinput.append(count)
+
+T = freeinput
+power = predict
+
+from scipy.interpolate import spline
+xnew = np.linspace(1,140,10000)
+power_smooth = spline(T,power,xnew)
+
+plt.title(" Mean Error Vs. Iteration(s)")
+plt.ylabel("Error")
+plt.xlabel("Iteration")
+plt.plot(xnew,power_smooth,"r")
+plt.plot(freeinput,predict,"b")
 plt.show()
-'''
-#machine learning part 
-#DATA WILL BE TRAINED CONTINUOUSLY TAKING THE DATA SET OF EVERY 2 HOUR DATA
-#data containing the present trainset from 1st 125 minutes = 2 hour dataset
-
-
-
-traindata =[[ 412.632],
- [ 334.656],
- [ 394.596],
- [ 465.552],
- [ 410.904],
- [ 412.452],
- [ 502.776],
- [ 527.292],
- [ 423.324],
- [ 547.596],
- [ 637.416],
- [ 625.752],
- [ 638.604],
- [ 675.972],
- [ 656.064],
- [ 763.308],
- [ 786.852],
- [ 662.112],
- [ 455.076],
- [ 575.388],
- [ 459.468],
- [ 683.784],
- [ 442.872],
- [ 582.444],
- [ 644.760]]
-
-
-
-loaddata =[[ 14188.763],
- [  9332.886],
- [ 12975.500],
- [ 18061.555],
- [ 14070.174],
- [ 14176.387],
- [ 21065.308],
- [ 23169.737],
- [ 14933.600],
- [ 24988.448],
- [ 33858.263],
- [ 32630.463],
- [ 33984.589],
- [ 38078.178],
- [ 35868.331],
- [ 48553.258],
- [ 51594.672],
- [ 36532.691],
- [ 17257.847],
- [ 27589.279],
- [ 17592.570],
- [ 38963.379],
- [ 16344.634],
- [ 28270.084],
- [ 34642.954]]	
-
-
-regr_1 = DecisionTreeRegressor(max_depth=2)
-regr_1.fit(traindata, loaddata)
-temp = regr_1.predict([770])
-
-print temp
